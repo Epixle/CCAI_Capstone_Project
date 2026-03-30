@@ -377,11 +377,13 @@ Every page must have a **purposeful response strategy**. A bare text message is 
 **4.1 — Rich Responses with Custom Payloads**
 At least **two pages** must send suggestion chip payloads:
 
-> 📝 **Your Company Here:** Replace the chip labels with your actual service options. The chips on your Start page should reflect your two core use cases. Examples for an insurance company: `"File a Claim"`, `"Check Claim Status"`, `"Update Policy"`, `"Speak to Agent"`.
-> - Chip 1: ___________________________
-> - Chip 2: ___________________________
-> - Chip 3: ___________________________
-> - Chip 4 (optional): ___________________________
+> 📝 **Nintendo:** Replace the chip labels with your actual service options. The chips on your Start page should reflect your two core use cases. Examples for an insurance company: `"File a Claim"`, `"Check Claim Status"`, `"Update Policy"`, `"Speak to Agent"`.
+> - Chip 1: Shop Products
+> - Chip 2: Track Order
+> - Chip 3: Movie Info
+> - Chip 4: Speak to Agent
+
+> - Page 1: Start Page
 
 ```json
 {
@@ -389,10 +391,28 @@ At least **two pages** must send suggestion chip payloads:
     {
       "type": "chips",
       "options": [
-        { "text": "[YOUR OPTION 1]" },
-        { "text": "[YOUR OPTION 2]" },
-        { "text": "[YOUR OPTION 3]" },
+        { "text": "Shop Products" },
+        { "text": "Track Order" },
+        { "text": "Movie Info" },
         { "text": "Speak to Agent" }
+      ]
+    }
+  ]]
+}
+```
+
+> - Page 2: Post Resolution Page
+
+```json
+{
+  "richContent": [[
+    {
+      "type": "chips",
+      "options": [
+        { "text": "Check Another Product" },
+        { "text": "Track Another Order" },
+        { "text": "Account Help" },
+        { "text": "Goodbye" }
       ]
     }
   ]]
@@ -402,20 +422,20 @@ At least **two pages** must send suggestion chip payloads:
 **4.2 — Conditional Responses (Mandatory)**
 Your confirmation page must vary its message based on session parameters:
 
-> 📝 **Your Company Here:** Rewrite the confirmation messages in your company's actual tone and brand voice. Replace the SLA time estimates ("1 hour", "24 hours") with your real or realistic service commitments. Also replace `ref_id` with whatever you name the reference field in Firestore.
-> - Urgent confirmation message: ___________________________
-> - Normal confirmation message: ___________________________
-> - Default confirmation message: ___________________________
+> 📝 **Nintendo:** Rewrite the confirmation messages in your company's actual tone and brand voice. Replace the SLA time estimates ("1 hour", "24 hours") with your real or realistic service commitments. Also replace `ref_id` with whatever you name the reference field in Firestore.
+> - Urgent confirmation message: ⚠️ Your issue has been logged with priority handling. Reference: $session.params.request_ref_id. A Nintendo specialist should review it as soon as possible.
+> - Normal confirmation message: ✅ Your request has been submitted. Reference: $session.params.request_ref_id. We’ll review it shortly.
+> - Default confirmation message: Your request has been submitted successfully. Reference: $session.params.request_ref_id.
 
 ```
-IF $session.params.priority_level = "[YOUR URGENT TIER NAME]":
-  "[YOUR URGENT CONFIRMATION — e.g., '⚠️ Your urgent request has been logged. Reference: $session.params.ref_id. You'll hear back within 1 hour.']"
+IF $session.params.priority_level = "urgent":
+  "⚠️ Your issue has been logged with priority handling. Reference: $session.params.request_ref_id. A Nintendo specialist should review it as soon as possible."
 
-IF $session.params.priority_level = "[YOUR NORMAL TIER NAME]":
-  "[YOUR NORMAL CONFIRMATION — e.g., '✅ Request logged. Reference: $session.params.ref_id. Estimated response: 24 hours.']"
+IF $session.params.priority_level = "normal":
+  "✅ Your request has been submitted. Reference: $session.params.request_ref_id. We’ll review it shortly."
 
 DEFAULT:
-  "[YOUR DEFAULT CONFIRMATION — e.g., 'Your request has been submitted. Reference: $session.params.ref_id.']"
+  "Your request has been submitted successfully. Reference: $session.params.request_ref_id."
 ```
 
 **4.3 — Webhook Error Handling**
@@ -424,7 +444,7 @@ Configure a `webhook.error` event handler on every page that calls a webhook:
 ```
 Event: webhook.error
   Param Preset: $session.params.webhook_failed = true
-  Response: "I'm having trouble reaching our system right now. Your information is safe. [Option to retry or speak to agent.]
+  Response: "beep boop My hardware is circuiting! Please try again or connect to an agent for more help."
 ```
 
 ---
@@ -450,7 +470,7 @@ Page: Collect Request Details (no-match handler):
 
 Route Group: Global Handlers
   Route: $session.params.attempt_counter >= 3
-    → Response: "I'm struggling to understand. Connecting you to a specialist."
+    → Response: "*beep boop* Sorry, I couldn't understand. Let me connect you to a specialist."
     → Param Preset: $session.params.attempt_counter = 0
     → Transition: Escalation Flow
 ```
@@ -475,31 +495,34 @@ Define the human agent team that will handle escalations. You need at least 4 ag
 
 | Agent ID | Specialization | Tier | Languages | Priority Queues |
 |---|---|---|---|------|
-| Agent-1 | [YOUR SPECIALIZATION] | 1 | [Language] | [your queue name] |
-| Agent-2 | [YOUR SPECIALIZATION] | 2 | [Languages] | [your queue names] |
-| Agent-3 | [YOUR SPECIALIZATION] | 2 | [Language] | [your queue names] |
-| Agent-4 | [YOUR SPECIALIZATION] | 1 | [Language] | [your queue name] |
+| Agent-1 | Technical Escalations | 1 | ES | Issues, VIP, System Failure |
+| Agent-2 | Billing / Orders | 2 | FR, PT | Purchase, Info, Returns |
+| Agent-3 | Billing Escalations / VIP | 1 | KL | VIP, Adv Billing, General |
+| Agent-4 | General Support / Overflow | 2 | HI | Purchase, Info, General Overflow |
 
 **6.2 — Queue Strategy (from W8 D3)**
 Define your queue overflow logic:
 
-> 📝 **Your Company Here:** Name your queues based on your company's service structure (e.g., `Claims-Urgent`, `Billing-Standard`). Adjust SLA targets and wait times to reflect realistic expectations for your industry. Healthcare may need stricter SLAs than retail. Write your queue names and SLA targets here:
-> - Queue 1 name: ___________________________ SLA target: ___________________________
-> - Queue 2 name: ___________________________ SLA target: ___________________________
+> 📝 **Nintendo:** Name your queues based on your company's service structure (e.g., `Claims-Urgent`, `Billing-Standard`). Adjust SLA targets and wait times to reflect realistic expectations for your industry. Healthcare may need stricter SLAs than retail. Write your queue names and SLA targets here:
+> - Queue 1 name: Nintendo-Issues-Urgent
+> - SLA target: 90/10
+> - Queue 2 name: Nintendo-Purchase-Standard
+> - SLA target: 80/20
 
 ```
-Queue: [YOUR URGENT QUEUE NAME]
-  SLA Target: [e.g., 90/10]
-  Max Wait: [e.g., 2 min]
+Queue: Nintendo-Issues-Urgent
+  SLA Target: 90/10
+  Max Wait: 3 min
   Overflow 1 (60s): Relax skill requirements to Tier 1
   Overflow 2 (120s): Offer callback
-  Overflow 3 (180s): Voicemail + ticket created in Firestore ([your collection name])
+  Overflow 3 (180s): Voicemail + ticket created in Firestore (support_tickets)
 
-Queue: [YOUR STANDARD QUEUE NAME]
-  SLA Target: [e.g., 80/20]
-  Max Wait: [e.g., 4 min]
+Queue: Nintendo-Purchase-Standard
+  SLA Target: 80/20
+  Max Wait: 5 min
   Overflow 1 (120s): General agents
   Overflow 2 (240s): Callback offer
+  Overflow 3 (300s): Voicemail
 ```
 
 **6.3 — Escalation Flow in CX**
@@ -518,18 +541,18 @@ No agent ships without evidence. Your submission must include proof of testing.
 
 Run and document the following **minimum test scenarios** in the CX Simulator:
 
-> 📝 **Your Company Here:** Columns **Input** and **Expected Outcome** must be filled in with your company-specific values before testing. Replace the generic inputs (e.g., "Account + urgent request") with realistic utterances a customer of your company would say, and the expected outcomes with the actual page/response names in your agent.
+> 📝 **Nintendo:** Columns **Input** and **Expected Outcome** must be filled in with your company-specific values before testing. Replace the generic inputs (e.g., "Account + urgent request") with realistic utterances a customer of your company would say, and the expected outcomes with the actual page/response names in your agent.
 
 | Test ID | Scenario | Your Input (fill in) | Your Expected Outcome (fill in) |
 |---|---|---|---|
-| T-01 | Happy path (top-tier user) | ___________________________ | Routes to [your Tier 1 flow], webhook confirms |
-| T-02 | Happy path (standard user) | ___________________________ | [Your standard flow], confirmation with ref ID |
-| T-03 | Form reprompt | ___________________________ | Bot reprompts with your custom reprompt text |
-| T-04 | 3-strike escalation | 3 consecutive no-match inputs | Counter reaches 3, escalates to [your Escalation Flow] |
-| T-05 | Start over | ___________________________ | Session params cleared, returns to Start |
-| T-06 | Explicit escalation | ___________________________ | Escalation Flow triggered, context passed |
+| T-01 | Happy path (top-tier user) | "I want to buy Zelda for Switch 2" | Routes to Product Purchase Flow (Expansion path), product shown via `product_lookup` |
+| T-02 | Happy path (standard user) | "Track my order 123456789012" | Order Tracking Flow → webhook returns status → response shown |
+| T-03 | Form reprompt | "My game is broken" → (no console given) | Bot reprompts with your custom reprompt text |
+| T-04 | 3-strike escalation | 3 consecutive no-match inputs | Counter reaches 3, escalates to Escalation Flow |
+| T-05 | Start over | "restart" | Session params cleared, returns to Start |
+| T-06 | Explicit escalation | "I want a human" | Escalation Flow triggered, context passed |
 | T-07 | Webhook error | Simulate webhook timeout | Your `webhook.error` handler fires gracefully |
-| T-08 | Condition branching | Set tier = "[your tier 1 name]" | Conditional response shows your Tier 1 message |
+| T-08 | Condition branching | priority_level = urgent | Urgent confirmation message displayed |
 
 Submit a **screenshot** or **transcript** for each test.
 
@@ -539,11 +562,11 @@ Based on a hypothetical traffic pattern, fill in this KPI table in your submissi
 
 | KPI | Simulated Value | Target | Pass/Fail |
 |---|---|---|---|
-| Bot Containment Rate | _%  | ≥ 40% | |
-| Escalation Rate | _% | ≤ 30% | |
-| Form Completion Rate | _% | ≥ 80% | |
-| Webhook Error Rate | _% | ≤ 5% | |
-| 3-Strike Trigger Rate | _% | ≤ 10% | |
+| Bot Containment Rate | 80%%  | ≥ 40% | PASS |
+| Escalation Rate | 12% | ≤ 30% | PASS |
+| Form Completion Rate | 90% | ≥ 80% | PASS |
+| Webhook Error Rate | 1% | ≤ 5% | PASS |
+| 3-Strike Trigger Rate | 5% | ≤ 3% | FAIL |
 
 ---
 
@@ -597,10 +620,10 @@ Before submitting, confirm every item below:
 
 Every modern Dialogflow CX agent ships with a hybrid architecture: deterministic flows **plus** a generative safety net. You must implement both halves.
 
-> 📝 **Your Company Here:** What type of documents would your company maintain for customer self-service? (e.g., FAQs, product manuals, policy documents, onboarding guides). List 2–3 documents you will add to your Data Store:
-> - Document 1: ___________________________
-> - Document 2: ___________________________
-> - Document 3 (optional): ___________________________
+> 📝 **Nintendo:** What type of documents would your company maintain for customer self-service? (e.g., FAQs, product manuals, policy documents, onboarding guides). List 2–3 documents you will add to your Data Store:
+> - Document 1: Nintendo Support FAQ
+> - Document 2: Nintendo Product & Game Information
+> - Document 3: Nintendo Online Membership & Subscription Guide
 
 ### Tasks
 
@@ -615,23 +638,31 @@ Attach the Data Store to your `Default Start Flow` as a fallback handler:
 ```
 Default Start Flow → Agent Responses → Generative Fallback:
   Enabled: true
-  Data Store: [YOUR DATA STORE NAME]
-  Prompt: "You are a helpful assistant for [YOUR COMPANY]. 
+  Data Store: Nintendo Online Membership & Subscription Guide
+  Prompt: "You are a helpful assistant for Nintendo. 
            Only answer from the provided documents. 
-           If unsure, say 'I'll connect you with someone who can help.'"
+           If unsure, say '*beep boop* Sorry, my eyes are rusty. I'll connect you with someone who can help."
 ```
 
-> 📝 **Your Company Here:** Write your generative fallback prompt here (it must match your company's tone):
-> ___________________________
+> 📝 **Nintendo:** Write your generative fallback prompt here (it must match your company's tone):
+> "You are R.O.B., a helpful Nintendo assistant.
+
+Only answer using the provided Nintendo support and product documents.
+Be concise, friendly, and accurate.
+
+If the answer is not clearly found in the documents, say:
+"*beep boop* Sorry, my eyes are rusty. I'll connect you with someone who can help."
+
+Do not make up information."
 
 **8.3 — Test Generative vs. Deterministic Routing**
 Run test cases that prove both paths work:
 
 | Test | Input | Expected Path | Expected Response |
 |---|---|---|---|
-| G-01 | A question that matches an intent | Deterministic | Goes to your flow |
-| G-02 | A question answered by your Data Store | Generative | Cites the document |
-| G-03 | A question outside all documents | Generative | Graceful "I don't know" |
+| G-01 | “I want to buy Zelda” | Deterministic | Routed to Product Purchase Flow |
+| G-02 | “What is Nintendo Switch Online?” | Generative | Cites the document |
+| G-03 | “What is the capital of France?” | Generative | Fallback |
 
 **Submission Requirement**: Screenshots for G-01, G-02, and G-03 from the CX Simulator.
 
@@ -641,9 +672,9 @@ Run test cases that prove both paths work:
 
 A production contact center agent handles **voice callers**, not just chat users. Your agent must be voice-ready.
 
-> 📝 **Your Company Here:** Which pages in your agent do customers spend the most time on? Those are the priority pages for SSML tuning. List 2 pages you will make voice-optimized:
-> - Page 1: ___________________________
-> - Page 2: ___________________________
+> 📝 **Nintendo:** Which pages in your agent do customers spend the most time on? Those are the priority pages for SSML tuning. List 2 pages you will make voice-optimized:
+> - Page 1: Authenticate
+> - Page 2: Issue Confirmation
 
 ### Tasks
 
@@ -655,27 +686,28 @@ On your Authentication Flow's Verify page, replace the plain text response with 
   <break time="400ms"/>
   Welcome back,
   <emphasis level="moderate">$session.params.customer_name</emphasis>.
-  <break time="200ms"/>
-  You are on our
+  <break time="250ms"/>
+  You are currently a
   <prosody rate="slow">$session.params.loyalty_tier</prosody>
-  plan.
+  Nintendo member.
+  <break time="250ms"/>
   How can I help you today?
 </speak>
 ```
 
-> 📝 **Your Company Here:** Rewrite this SSML block using your company's vocabulary and tier names. Use at least one `<break>`, one `<emphasis>`, and one `<prosody>` tag:
+> 📝 **Nintendo:** Rewrite this SSML block using your company's vocabulary and tier names. Use at least one `<break>`, one `<emphasis>`, and one `<prosody>` tag:
 > *(Paste your SSML here)*
 
 **9.2 — Apply SSML to the Confirmation Page**
 Your submission confirmation must also be voice-optimized:
 ```xml
 <speak>
-  Your request has been submitted.
+  Your Nintendo support request has been submitted.
   <break time="300ms"/>
   Your reference number is
-  <say-as interpret-as="characters">$session.params.ref_id</say-as>.
+  <say-as interpret-as="characters">$session.params.request_ref_id</say-as>.
   <break time="500ms"/>
-  Is there anything else I can help you with?
+  Is there anything else I can help you with today?
 </speak>
 ```
 
@@ -690,9 +722,9 @@ Test each SSML response using the **CX Simulator's voice preview** feature. Conf
 
 Static entities cannot personalize at runtime. This deliverable proves you can inject user-specific entities into the conversation based on real session data.
 
-> 📝 **Your Company Here:** What are examples of user-specific values in your domain? (e.g., past order IDs, open ticket numbers, enrolled policy IDs, appointment dates). List 2 types:
-> - Dynamic value type 1: ___________________________
-> - Dynamic value type 2: ___________________________
+> 📝 **Nintendo:** What are examples of user-specific values in your domain? (e.g., past order IDs, open ticket numbers, enrolled policy IDs, appointment dates). List 2 types:
+> - Dynamic value type 1: Order IDs
+> - Dynamic value type 2: Support Ticket IDs
 
 ### Tasks
 
@@ -701,20 +733,24 @@ When your `lookup_account` webhook handler runs, it should return a session enti
 
 ```python
 def handle_account_lookup(req):
-    # Fetch customer data from Firestore
     account_num = req["sessionInfo"]["parameters"]["account_number"]
-    doc = db.collection("[YOUR COLLECTION]").document(str(account_num)).get()
+
+    # Get account
+    doc = db.collection("accounts").document(str(account_num)).get()
     data = doc.to_dict() if doc.exists else {}
 
-    # Build session entity for user's specific items
-    session_path = req["sessionInfo"]["session"]
+    # Fetch user's orders (dynamic values)
+    orders_ref = db.collection("orders").where("account_id", "==", account_num).stream()
+    order_ids = [order.id for order in orders_ref]
+
+    # Build session entity override for order IDs
     entity_overrides = [{
         "entityOverrideMode": "ENTITY_OVERRIDE_MODE_SUPPLEMENT",
         "entityType": {
-            "displayName": "@[YOUR-ENTITY]",   # e.g., @ticket-id or @order-id
+            "displayName": "@order_id",
             "entities": [
-                {"value": item_id, "synonyms": [item_id]}
-                for item_id in data.get("[YOUR FIELD]", [])  # e.g., "open_tickets"
+                {"value": oid, "synonyms": [oid]}
+                for oid in order_ids
             ]
         }
     }]
@@ -723,21 +759,22 @@ def handle_account_lookup(req):
         "sessionInfo": {
             "parameters": {
                 "customer_name": data.get("name", "Valued Customer"),
-                "loyalty_tier": data.get("tier", "general")
+                "loyalty_tier": data.get("membership_tier", "Standard"),
+                "order_list": order_ids
             }
         },
-        "sessionEntityTypes": entity_overrides  # <-- dynamic injection
+        "sessionEntityTypes": entity_overrides
     })
 ```
 
-> 📝 **Your Company Here:** Fill in the `[YOUR COLLECTION]`, `[YOUR-ENTITY]`, and `[YOUR FIELD]` placeholders with your Firestore collection name, entity name, and the Firestore field that holds the dynamic list.
+> 📝 **Nintendo:** Fill in the `[YOUR COLLECTION]`, `[YOUR-ENTITY]`, and `[YOUR FIELD]` placeholders with your Firestore collection name, entity name, and the Firestore field that holds the dynamic list.
 
 **10.2 — Use the Injected Entity in a Form**
 On a page **after** authentication, add a form parameter that uses the injected entity:
 ```
-Form Parameter: selected_item ([YOUR-ENTITY]) — Required
+Form Parameter: selected_item (@order_id) — Required
   Prompt: "Which [ticket/order/policy] would you like help with?
-           Your open ones are: [$session.params.[YOUR FIELD]]"
+           Your open ones are: [$session.params.order_list]"
 ```
 
 **10.3 — Prove It Works**
@@ -752,9 +789,18 @@ In the simulator: log in with an account that has 2 items in Firestore. Confirm 
 Dialogflow CX is not deployed in isolation — it sits on top of a telephony layer. You must design the complete IVR tree that a **voice caller** experiences before, during, and after their conversation with the bot.
 
 > 📝 **Your Company Here:** What are the main DTMF menu options a caller hears before the bot takes over? What are your business hours? What happens after hours? Fill in:
-> - Business hours: ___________________________
-> - After-hours message: ___________________________
-> - DTMF menu options (1, 2, 3, ...): ___________________________
+> - Business hours: Monday-Friday 8AM - 6PM, Saturday 10AM - 6PM
+> - After-hours message: "Thank you for calling Nintendo. Our support team is currently closed. Please leave a voicemail after the tone, and we’ll create a support ticket for follow-up. You can also use our chat support for self-service options.”
+> - DTMF menu options (1, 2, 3, ...):
+```
+Press 1: Shop for Nintendo products
+Press 2: Track an order or delivery
+Press 3: Account or billing help
+Press 4: Report a game or console issue
+Press 5: Returns and refunds
+Press 0: Speak to an agent
+No input ×2: send caller to CX Start Flow in NLU mode
+```
 
 ### Tasks
 
@@ -787,10 +833,10 @@ For your highest-traffic queue, show the EWT calculation:
 EWT = (Queue Depth × AHT) / Available Agents
 
 Your values:
-  Queue depth (peak estimate): ___
-  AHT (minutes): ___
-  Available agents (peak): ___
-  Calculated EWT: ___ minutes
+  Queue depth (peak estimate): 10
+  AHT (minutes): 4 min
+  Available agents (peak): 5 agents
+  Calculated EWT: 8 minutes
   → Action: [Offer callback / Continue / Emergency IVR]
 ```
 
@@ -802,12 +848,14 @@ Your values:
 
 A production webhook is not a single function — it is a dispatch system. This deliverable forces you to engineer your backend like a real engineer.
 
-> 📝 **Your Company Here:** List all the webhook operations your agent currently needs. You must have at least 5. Name them precisely as they will appear as tags in Dialogflow CX:
-> - Tag 1: ___________________________
-> - Tag 2: ___________________________
-> - Tag 3: ___________________________
-> - Tag 4: ___________________________
-> - Tag 5: ___________________________
+> 📝 **Nintendo:** List all the webhook operations your agent currently needs. You must have at least 5. Name them precisely as they will appear as tags in Dialogflow CX:
+> - Tag 1: account_lookup
+> - Tag 2: product_lookup
+> - Tag 3: order_status
+> - Tag 4: movie_info
+> - Tag 5: report_issue
+> - Tag 6: return_request
+> - Tag 7: create_handoff_context
 
 ### Tasks
 
@@ -818,36 +866,336 @@ Refactor your `main.py` to use a clean handler registry:
 import functions_framework
 from flask import jsonify, make_response
 from google.cloud import firestore
-import json, logging
+import json
+import logging
+from datetime import datetime
 
 db = firestore.Client()
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
+def log_event(severity: str, event: str, req: dict | None = None, **kwargs):
+    payload = {
+        "severity": severity,
+        "event": event,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+
+    if req:
+        payload["session_id"] = req.get("sessionInfo", {}).get("session", "unknown")
+        payload["tag"] = req.get("fulfillmentInfo", {}).get("tag", "unknown")
+
+    payload.update(kwargs)
+    logger.info(json.dumps(payload))
+
+
+def text_response(message: str, session_params: dict | None = None, session_entities: list | None = None):
+    response = {
+        "fulfillmentResponse": {
+            "messages": [
+                {"text": {"text": [message]}}
+            ]
+        }
+    }
+
+    if session_params:
+        response["sessionInfo"] = {"parameters": session_params}
+
+    if session_entities:
+        response["sessionEntityTypes"] = session_entities
+
+    return jsonify(response)
+
+
+def get_params(req: dict) -> dict:
+    return req.get("sessionInfo", {}).get("parameters", {})
+
+
+def handle_account_lookup(req: dict):
+    params = get_params(req)
+    account_number = str(params.get("account_number", "")).strip()
+
+    log_event("INFO", "account_lookup_started", req, account_number=account_number)
+
+    if not account_number:
+        return text_response("I need your 12-digit Nintendo account number first.")
+
+    doc = db.collection("accounts").document(account_number).get()
+    log_event("INFO", "firestore_read", req, collection="accounts", document_id=account_number, found=doc.exists)
+
+    if not doc.exists:
+        log_event("WARNING", "account_not_found", req, account_number=account_number)
+        return text_response("I couldn't find that Nintendo account.")
+
+    data = doc.to_dict() or {}
+
+    # Dynamic entity injection for this user's orders
+    orders_ref = db.collection("orders").where("account_id", "==", account_number).stream()
+    order_ids = [order.id for order in orders_ref]
+
+    entity_overrides = [{
+        "entityOverrideMode": "ENTITY_OVERRIDE_MODE_SUPPLEMENT",
+        "entityType": {
+            "displayName": "@order_id",
+            "entities": [{"value": oid, "synonyms": [oid]} for oid in order_ids]
+        }
+    }]
+
+    written_params = {
+        "customer_name": data.get("name", "Valued Customer"),
+        "loyalty_tier": data.get("membership_tier", "Standard"),
+        "authenticated": True,
+        "order_list": order_ids
+    }
+
+    log_event(
+        "INFO",
+        "handler_success",
+        req,
+        handler="account_lookup",
+        written_params=list(written_params.keys())
+    )
+
+    return text_response(
+        f"Account verified. Welcome back, {written_params['customer_name']}.",
+        session_params=written_params,
+        session_entities=entity_overrides
+    )
+
+
+def handle_product_lookup(req: dict):
+    params = get_params(req)
+    game = str(params.get("game", "")).strip()
+    franchise = str(params.get("franchise", "")).strip()
+    console = str(params.get("console", "")).strip()
+
+    log_event("INFO", "product_lookup_started", req, game=game, franchise=franchise, console=console)
+
+    if not game and not franchise:
+        return text_response("Please tell me which Nintendo game, franchise, or product you want.")
+
+    query = db.collection("products")
+    if game:
+        docs = query.where("name", "==", game).limit(1).get()
+    else:
+        docs = query.where("franchise", "==", franchise).limit(1).get()
+
+    log_event("INFO", "firestore_read", req, collection="products", found=bool(docs))
+
+    if not docs:
+        log_event("WARNING", "product_not_found", req, game=game, franchise=franchise)
+        return text_response("I couldn't find that Nintendo product. Please try a more specific product name.")
+
+    data = docs[0].to_dict() or {}
+    written_params = {
+        "product_name": data.get("name", "Nintendo Product"),
+        "product_url": data.get("url", ""),
+        "product_price": data.get("price", "")
+    }
+
+    log_event("INFO", "handler_success", req, handler="product_lookup", product_name=written_params["product_name"])
+
+    return text_response(
+        f"I found {written_params['product_name']}. It is available for ${written_params['product_price']}.",
+        session_params=written_params
+    )
+
+
+def handle_order_status(req: dict):
+    params = get_params(req)
+    order_id = str(params.get("selected_order") or params.get("order_id") or "").strip()
+
+    log_event("INFO", "order_status_started", req, order_id=order_id)
+
+    if not order_id:
+        return text_response("Please provide your Nintendo order number.")
+
+    doc = db.collection("orders").document(order_id).get()
+    log_event("INFO", "firestore_read", req, collection="orders", document_id=order_id, found=doc.exists)
+
+    if not doc.exists:
+        log_event("WARNING", "order_not_found", req, order_id=order_id)
+        return text_response("I couldn't find that order.")
+
+    data = doc.to_dict() or {}
+    status = data.get("status", "Processing")
+    tracking_number = data.get("tracking_number", "")
+
+    written_params = {
+        "order_id": order_id,
+        "tracking_number": tracking_number,
+        "order_status_value": status
+    }
+
+    log_event("INFO", "handler_success", req, handler="order_status", order_status=status)
+
+    return text_response(
+        f"Your order {order_id} is currently {status}.",
+        session_params=written_params
+    )
+
+
+def handle_movie_info(req: dict):
+    params = get_params(req)
+    franchise = str(params.get("franchise", "")).strip()
+
+    log_event("INFO", "movie_info_started", req, franchise=franchise)
+
+    docs = db.collection("movies").where("franchise", "==", franchise or "Mario").limit(1).get()
+    log_event("INFO", "firestore_read", req, collection="movies", found=bool(docs))
+
+    if not docs:
+        log_event("WARNING", "movie_not_found", req, franchise=franchise)
+        return text_response("I couldn't find movie information for that Nintendo title.")
+
+    data = docs[0].to_dict() or {}
+    title = data.get("title", "Nintendo Movie")
+    release_date = data.get("release_date", "TBD")
+
+    written_params = {
+        "movie_title": title,
+        "movie_release_date": release_date
+    }
+
+    log_event("INFO", "handler_success", req, handler="movie_info", movie_title=title)
+
+    return text_response(
+        f"{title} is scheduled for release on {release_date}.",
+        session_params=written_params
+    )
+
+
+def handle_report_issue(req: dict):
+    params = get_params(req)
+    console = str(params.get("console", "")).strip()
+    franchise = str(params.get("franchise", "")).strip()
+    description = str(params.get("description", "")).strip()
+    account_number = str(params.get("account_number", "")).strip()
+    priority_level = str(params.get("priority_level", "normal")).strip()
+
+    log_event("INFO", "report_issue_started", req, console=console, franchise=franchise, priority_level=priority_level)
+
+    ticket = {
+        "account_id": account_number,
+        "console": console,
+        "franchise": franchise,
+        "description": description,
+        "priority": priority_level,
+        "status": "OPEN",
+        "channel": "cx"
+    }
+
+    ref = db.collection("support_tickets").add(ticket)
+    ticket_id = ref[1].id
+
+    log_event("INFO", "firestore_write", req, collection="support_tickets", ticket_id=ticket_id)
+    log_event("INFO", "handler_success", req, handler="report_issue", ticket_id=ticket_id)
+
+    return text_response(
+        f"Your Nintendo support request has been submitted. Reference: {ticket_id}.",
+        session_params={"request_ref_id": ticket_id}
+    )
+
+
+def handle_return_request(req: dict):
+    params = get_params(req)
+    order_id = str(params.get("order_id", "")).strip()
+    reason = str(params.get("reason", "")).strip()
+    account_number = str(params.get("account_number", "")).strip()
+
+    log_event("INFO", "return_request_started", req, order_id=order_id, reason=reason)
+
+    return_doc = {
+        "order_id": order_id,
+        "account_id": account_number,
+        "reason": reason,
+        "status": "PENDING"
+    }
+
+    ref = db.collection("returns").add(return_doc)
+    return_id = ref[1].id
+
+    log_event("INFO", "firestore_write", req, collection="returns", return_id=return_id)
+    log_event("INFO", "handler_success", req, handler="return_request", return_id=return_id)
+
+    return text_response(
+        f"Your return request has been submitted. Reference: {return_id}.",
+        session_params={"request_ref_id": return_id}
+    )
+
+
+def handle_create_handoff_context(req: dict):
+    params = get_params(req)
+
+    handoff_context = {
+        "account_number": params.get("account_number"),
+        "customer_name": params.get("customer_name"),
+        "loyalty_tier": params.get("loyalty_tier"),
+        "issue_type": params.get("franchise"),
+        "order_id": params.get("order_id"),
+        "priority_level": params.get("priority_level"),
+        "authenticated": params.get("authenticated", False),
+        "escalated": True
+    }
+
+    ref = db.collection("handoff_contexts").add(handoff_context)
+    context_id = ref[1].id
+
+    log_event("INFO", "firestore_write", req, collection="handoff_contexts", context_id=context_id)
+    log_event("INFO", "handler_success", req, handler="create_handoff_context", context_id=context_id)
+
+    return text_response(
+        "Alright, I'm connecting you to a Nintendo specialist now.",
+        session_params={"escalated": True, "handoff_context_id": context_id}
+    )
+
 
 # Handler registry — add new tags here without touching dispatch logic
 HANDLER_REGISTRY = {
-    "[YOUR TAG 1]": handle_tag_1,
-    "[YOUR TAG 2]": handle_tag_2,
-    "[YOUR TAG 3]": handle_tag_3,
-    "[YOUR TAG 4]": handle_tag_4,
-    "[YOUR TAG 5]": handle_tag_5,
+    "account_lookup": handle_account_lookup,
+    "product_lookup": handle_product_lookup,
+    "order_status": handle_order_status,
+    "movie_info": handle_movie_info,
+    "report_issue": handle_report_issue,
+    "return_request": handle_return_request,
+    "create_handoff_context": handle_create_handoff_context,
 }
+
 
 @functions_framework.http
 def agent_webhook(request):
-    req = request.get_json(silent=True)
+    req = request.get_json(silent=True) or {}
     tag = req.get("fulfillmentInfo", {}).get("tag", "")
     session_id = req.get("sessionInfo", {}).get("session", "unknown")
 
-    logger.info(json.dumps({"event": "dispatch", "tag": tag, "session": session_id}))
+    logger.info(json.dumps({
+        "severity": "INFO",
+        "event": "dispatch",
+        "tag": tag,
+        "session": session_id
+    }))
 
     handler = HANDLER_REGISTRY.get(tag)
     if not handler:
+        logger.error(json.dumps({
+            "severity": "ERROR",
+            "event": "unknown_tag",
+            "tag": tag,
+            "session": session_id
+        }))
         return make_response(jsonify({"error": f"Unknown tag: {tag}"}), 400)
 
     try:
         return handler(req)
     except Exception as e:
-        logger.error(json.dumps({"event": "handler_error", "tag": tag, "error": str(e)}))
+        logger.error(json.dumps({
+            "severity": "ERROR",
+            "event": "handler_error",
+            "tag": tag,
+            "session": session_id,
+            "error": str(e)
+        }))
         return make_response(jsonify({"error": "Internal error"}), 500)
 ```
 
@@ -861,10 +1209,14 @@ def agent_webhook(request):
 Submit a table documenting each handler:
 
 | Tag | Firestore Operation | Session Params Read | Session Params Written | Cloud Log Event |
-|---|---|---|---|---|
-| [Tag 1] | read | [...] | [...] | [...] |
-| [Tag 2] | write | [...] | [...] | [...] |
-| ... | ... | ... | ... | ... |
+| `account_lookup`         | read `accounts`, read `orders` | `account_number`                                                                                              | `customer_name`, `loyalty_tier`, `authenticated`, `order_list` | `account_lookup_started`, `firestore_read`, `handler_success`  |
+| `product_lookup`         | read `products`                | `game`, `franchise`, `console`                                                                                | `product_name`, `product_url`, `product_price`                 | `product_lookup_started`, `firestore_read`, `handler_success`  |
+| `order_status`           | read `orders`                  | `selected_order` or `order_id`                                                                                | `order_id`, `tracking_number`, `order_status_value`            | `order_status_started`, `firestore_read`, `handler_success`    |
+| `movie_info`             | read `movies`                  | `franchise`                                                                                                   | `movie_title`, `movie_release_date`                            | `movie_info_started`, `firestore_read`, `handler_success`      |
+| `report_issue`           | write `support_tickets`        | `console`, `franchise`, `description`, `account_number`, `priority_level`                                     | `request_ref_id`                                               | `report_issue_started`, `firestore_write`, `handler_success`   |
+| `return_request`         | write `returns`                | `order_id`, `reason`, `account_number`                                                                        | `request_ref_id`                                               | `return_request_started`, `firestore_write`, `handler_success` |
+| `create_handoff_context` | write `handoff_contexts`       | `account_number`, `customer_name`, `loyalty_tier`, `franchise`, `order_id`, `priority_level`, `authenticated` | `escalated`, `handoff_context_id`                              | `firestore_write`, `handler_success`                           |
+
 
 **Submission Requirement**: Your complete `main.py` code + the handler documentation table.
 
