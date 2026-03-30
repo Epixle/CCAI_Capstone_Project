@@ -254,7 +254,7 @@ Your Dialogflow CX Agent must implement a **multi-flow architecture**. A single-
 **2.2 — Authentication Flow (Mandatory, from W9 D4)**
 This must be the **first** flow all users enter. Re-use your W9 D4 lab directly:
 
-> 📝 **Your Company Here:** Customize the entry greeting and the tier names to match your company and the tier names you defined in the Overview:
+> 📝 **Nintendo:** Customize the entry greeting and the tier names to match your company and the tier names you defined in the Overview:
 > - **Bot greeting text**: Greetings, I am R.O.B. *beep boop*! I can help with anything related to Nintendo.
 > - **Tier 1**: Switch Online Expansion Members
 > - **Tier 2**: Switch Online Members
@@ -263,19 +263,19 @@ This must be the **first** flow all users enter. Re-use your W9 D4 lab directly:
 
 ```
 Flow: Authentication Flow
-Page: Collect Account
-  Entry: "[YOUR GREETING HERE — e.g., 'Welcome to [Your Company]. To get started, I'll need to verify your account.']"
+Page: Access Account
+  Entry: "In order to access your account, you'll need to log in *buzz*! [Link/button/card to access Nintendo login portal]"
   Form:
     account_number (@sys.number) — Required
-      Reprompt (1st): "I didn't catch that. Please say or type your account number."
+      Reprompt (1st): ""I'm sorry, I didn't quite understand that *beep*. Could you try again? Make sure the account number is a 12 digit number."
       Reprompt (2nd): "I'm having trouble. Let me connect you to an agent." → Escalate
   Route: $page.params.status = "FINAL"
-    → Transition: Verify Page (calls webhook tag: "[YOUR TAG HERE]")
+    → Transition: Verify Page (calls webhook tag: "account_lookup")
 
 Page: Tier Router
-  Route 1: $session.params.loyalty_tier = "[YOUR TIER 1 NAME]"
+  Route 1: $session.params.loyalty_tier = "Switch Online Expansion Members"
     → Transition: [Tier 1 Entry] (in your Primary Service Flow A)
-  Route 2: $session.params.loyalty_tier = "[YOUR TIER 2 NAME]"
+  Route 2: $session.params.loyalty_tier = "Switch Online Members"
     → Transition: [Tier 2 Entry]
   Route 3: true (default)
     → Transition: [General Entry]
@@ -304,20 +304,20 @@ You must have **at least 8 intents** across your agent, each with a minimum of *
 
 ### Intent Requirements
 
-> 📝 **Your Company Here:** The first five intents below use generic names. Rename them to match your domain and add phrasing that your actual customers would use. For example, a telecom company might rename `start_new_request` to `report_outage` and `check_status` to `check_ticket_status`. Fill in your intent names:
-> - `start_new_request` → your name: ___________________________
-> - `check_status` → your name: ___________________________
-> - `modify_request` → your name: ___________________________
-> - `cancel_request` → your name: ___________________________
-> - `billing_inquiry` → your name (or replace with a domain-relevant intent): ___________________________
+> 📝 **Nintendo:** The first five intents below use generic names. Rename them to match your domain and add phrasing that your actual customers would use. For example, a telecom company might rename `start_new_request` to `report_outage` and `check_status` to `check_ticket_status`. Fill in your intent names:
+> - `start_new_request` → your name: `open_shop`
+> - `check_status` → your name: `order_status`
+> - `modify_request` → your name: `change_acc_info`
+> - `cancel_request` → your name: `return_request`
+> - `billing_inquiry` → your name: `show_movie_details`
 
 | Intent | Min Phrases | Must Use Entity |
 |---|---|---|
-| `start_new_request` *(rename for your domain)* | 15 | — |
-| `check_status` *(rename for your domain)* | 15 | `@sys.number` or custom ID entity |
-| `modify_request` *(rename for your domain)* | 15 | Custom entity (at least 3 synonyms each value) |
-| `cancel_request` *(rename for your domain)* | 15 | — |
-| `billing_inquiry` *(rename or replace)* | 15 | — |
+| `open_shop` | 15 | `@game`, `@console`, `@accessory`, or `@franchise` |
+| `order_status` | 15 | `@order_id` |
+| `change_acc_info` | 15 | `@account` |
+| `return_request` | 15 | `@order_id` |
+| `show_movie_details` | 15 | `@movie` |
 | `escalate_to_human` | 20 | — |
 | `start_over` | 10 | — |
 | `confirm_yes` | 10 | — |
@@ -327,51 +327,44 @@ You must have **at least 8 intents** across your agent, each with a minimum of *
 
 You must define **at least 2 custom entities** relevant to your chosen domain:
 
-> 📝 **Your Company Here:** The example entities below are generic. You must replace the **entity names** and **values** with ones specific to your industry. Examples:
+> 📝 **Nintendo:** The example entities below are generic. You must replace the **entity names** and **values** with ones specific to your industry. Examples:
 > - Telecom: `@issue-type` (outage, billing, device, account), `@service-type` (mobile, broadband, TV)
 > - Healthcare: `@appointment-type` (consultation, follow-up, lab), `@specialty` (cardiology, general, pediatrics)
 > - Insurance: `@claim-type` (auto, health, home), `@policy-status` (active, expired, pending)
 >
 > Fill in your two custom entity designs here before building in Dialogflow CX:
-> - **Entity 1 name**: ___________________________ Values + synonyms: ___________________________
-> - **Entity 2 name**: ___________________________ Values + synonyms: ___________________________
+> - **Entity 1 name**: `@console`
+> - Values + synonyms:
+Switch → ["switch", "nintendo switch", "original switch"]
+Switch 2 → ["switch 2", "nintendo switch 2", "new switch"]
+DS → ["ds", "nintendo ds"]
+DSi → ["dsi"]
+DSi XL → ["dsi xl", "large dsi"]
+GameCube → ["gamecube", "gc"]
+N64 → ["n64", "nintendo 64"]
+NES Console → ["nes", "nintendo entertainment system"]
+Virtual Boy → ["virtual boy"]
 
-```text
-Entity: @[YOUR-ENTITY-1] (Map kind)              ← replace with your domain-specific name
-  "value_1" → ["synonym", "synonym", "synonym"]  ← replace with your actual values
-  "value_2" → ["synonym", "synonym", "synonym"]
-  "value_3" → ["synonym", "synonym", "synonym"]
+> - **Entity 2 name**: `@franchise`
+> - Values + synonyms:
+Pokémon → ["pokemon", "pokémon"]
+Mario → ["mario", "super mario"]
+Legend of Zelda → ["zelda", "legend of zelda"]
+Kirby → ["kirby"]
+Nintendo Sports → ["sports", "nintendo sports", "switch sports"]
+Super Smash → ["smash", "super smash", "smash bros", "melee", "smash ultimate"]
 
-Entity: @[YOUR-ENTITY-2] (Map kind)              ← replace with your domain-specific name
-  "urgent" → ["emergency", "critical", "ASAP", "blocking"]
-  "normal" → ["whenever", "no rush", "standard", "regular"]
-  "low" → ["low priority", "minor", "when you have time"]
-```
 
 ### Multi-Turn Form (Mandatory, from W9 D2)
 
 Your primary service flow must include a **3-parameter form**:
 
 > 📝 **Your Company Here:** Replace the form parameters with the right entities for your domain. The prompts must use natural language your customers would hear from a bot in your industry. Fill in:
-> - **Page name**: ___________________________
-> - **Parameter 1** (entity + prompt question): ___________________________
-> - **Parameter 2** (entity + prompt question): ___________________________
-> - **Parameter 3** (entity + prompt question): ___________________________
-> - **Webhook tag for submission**: ___________________________
-
-```
-Page: [YOUR PAGE NAME — e.g., "Collect Request Details", "Book Appointment", "Report Outage"]
-  Form Parameters:
-    [param_1] (@[YOUR-ENTITY-1]) — Required
-      Prompt: "[YOUR DOMAIN-SPECIFIC PROMPT — e.g., 'What type of issue are you experiencing?']"
-    [param_2] (@[YOUR-ENTITY-2 or @priority-level]) — Required
-      Prompt: "[YOUR DOMAIN-SPECIFIC PROMPT — e.g., 'How urgent is this?']"
-    description (@sys.any) — Required
-      Prompt: "[YOUR DOMAIN-SPECIFIC PROMPT — e.g., 'Briefly describe the problem.']"
-  Route: $page.params.status = "FINAL"
-    → Webhook call (tag: "[YOUR WEBHOOK TAG]")
-    → Transition: Confirmation Page
-```
+> - **Page name**: Collect Issue Details
+> - **Parameter 1** (entity + prompt question): `@console` — “Which Nintendo console are you using?”
+> - **Parameter 2** (entity + prompt question): `@game`, `@franchise` — “Which game is this related to?”
+> - **Parameter 3** (entity + prompt question): `@sys.any` — “Please briefly describe the issue.”
+> - **Webhook tag for submission**: `report_issue`
 
 ---
 
